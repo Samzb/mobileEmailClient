@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+    <link rel="stylesheet" href="app.min.css">
+    <style>
+      
+
+      @-webkit-keyframes pulse {
+        0% {
+          background-color: #CCC;
+        }
+        25% {
+          background-color: #EEE;
+        }
+        50% {
+          background-color: #CCC;
+        }
+        75% {
+          background-color: #EEE;
+        }
+        100% {
+          background-color: #CCC;
+        }
+      }
+      
+    </style>
+  </head>
+
+  <body>
+    <div class="app-page" data-page="home">
+      <div class="app-topbar blue">
+        <div class="app-title">Send An Email</div>
+      </div>
+      <div class="app-content">
+        <p class="app-section">
+          Click below to send an email.
+        </p>
+
+        
+
+        <div class="app-section" id="emailsent-list">
+          
+        </div>
+
+        <div class="app-section">
+          <div class="app-button" data-target="sendEmail">Send to a new user</div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <div class="app-page" data-page="sendEmail">
+    <div id="sendEmailPage">
+      <div class="app-topbar">
+        <div class="app-title">Send Email</div>
+        <div class="right app-button" id="back_button">Done</div>
+      </div>
+
+      <div class="app-content">
+        
+        <div class="app-section" id="message"></div>
+
+        <div class="app-section">
+
+          From:<input class="app-input" placeholder="Sender Email Address" id="sender-email">
+          <input class="app-input" type="password" placeholder="Sender Email Password" id="sender-password">
+
+        </div>
+
+         <div class="app-section">
+          To:<input class="app-input" placeholder="Recipient Email Address" id="recipient-email">
+        </div>
+
+
+        <form class="app-section">
+
+          <input class="app-input" name="subject" placeholder="Subject" id="subject">
+          <textarea class="app-input" name="message" placeholder="Message" id="content"></textarea>
+
+          <div class="app-button green app-submit" id="submitEmail">Send</div>
+        </form>
+      </div>
+    </div>
+    </div>
+
+    
+
+    
+
+    
+
+    <script src="zepto.js"></script>
+    <script src="app.min.js"></script>
+    <script>
+
+
+      App.controller('home', function (page) {
+
+        var sent_recipient = new Array();
+
+        var replace_sent_email="";
+
+        if (typeof localStorage !== 'undefined') {
+
+          if (localStorage.getItem('recipient-list') !== null) {
+
+            sent_recipient = JSON.parse(localStorage.getItem('recipient-list'));
+
+            $.each(sent_recipient,function(key,value){
+              $(page).find("#emailsent-list")
+                .append('<div class="app-button recipient-button">'+value+'</div>');
+
+            });
+
+            $("#emailsent-list").show();
+
+            $(page).find(".recipient-button")
+              .on('click',function(){
+
+                var button_value = $(this).html();
+
+                App.dialog({
+                  okButton     : 'Send Email',
+                  cancelButton : 'Delete Email'
+                }, function (choice) {
+                  console.log(choice);
+                  if (choice == 'ok') {
+                      localStorage.setItem("recipient-email",button_value);
+                      App.load('sendEmail');
+                  }else{
+
+                    App.dialog({
+                      title        : 'Remove Email Address',
+                      text         : 'Are you sure you want to delete this email address from your list?',
+                      okButton     : 'Delete',
+                      cancelButton : 'Cancel'
+                    }, function (choice) {
+                       if (choice == 'ok') {
+                          sent_recipient = JSON.parse(localStorage.getItem('recipient-list'));
+
+                          var index = sent_recipient.indexOf(button_value);
+                          sent_recipient.splice(index,1);
+
+                          localStorage.setItem('recipient-list',JSON.stringify(sent_recipient));
+
+                              $.each(sent_recipient,function(key,value){
+                                replace_sent_email = replace_sent_email + '<div class="app-button recipient-button">'+value+'</div>';
+
+                              });
+
+                              $("#emailsent-list")
+                                  .html(replace_sent_email);
+
+                              App.load('home');
+
+                       }
+                    });
+                      
+                  }
+
+                });
+
+              });
+        
+        }else{
+
+          $(page).find("#emailsent-list").hide();
+        }
+      }
+        
+
+      });
+
+      App.controller('sendEmail', function (page) {
+
+        //this.transition = 'slideon-down';
+        $(page).find("#sendEmailPage")
+          .on('click',function(){
+            $("#message").hide();
+          });
+
+        if (typeof localStorage !== 'undefined') {
+          if (localStorage.getItem('recipient-email') !== null) {
+
+            $(page).find("#recipient-email")
+              .val(localStorage.getItem('recipient-email'));
+
+            localStorage.removeItem('recipient-email');
+            
+          }
+
+          if (localStorage.getItem('sender-email') !==null) {
+            $(page).find('#sender-email')
+              .val(localStorage.getItem('sender-email'));
+          }
+
+        }
+        
+        $(page).find("#message").hide();  
+
+        $(page).find("#submitEmail")
+          .clickable()
+          .on('click',function() {
+
+          recipientList = new Array();
+
+          var str;
+
+            if (typeof localStorage !=='undefined') {
+              str=$("#sender-email").val();
+
+              str = str.replace(/\s+/g, '');
+
+              if (str !== "") {
+                localStorage.setItem('sender-email',$("#sender-email").val());
+              }
+              
+              
+              if (localStorage.getItem('recipient-list') !== null) {
+
+                recipientList=JSON.parse(localStorage.getItem('recipient-list'));
+
+              }
+
+              str=$('#recipient-email').val();
+
+              str = str.replace(/\s+/g, '');
+
+              if ($.inArray($('#recipient-email').val(), recipientList) < 0 && str !== "") {
+                  recipientList.push($("#recipient-email").val());
+                  recipientList.sort();
+
+                localStorage.setItem('recipient-list',JSON.stringify(recipientList));
+
+              }
+
+              //localStorage.removeItem('recipient-list');
+              
+
+              $.ajax({
+                type: 'GET',
+                url: 'http://127.0.0.1/mobileEmailClient.php',
+                // data to be added to query string:
+                data: { sender:$("#sender-email").val(), recipient: $("#recipient-email").val(), header: $("#subject").val(), info:$("content").val(), password:$("#sender-password").val() },
+                // type of data we are expecting in return:
+                dataType: 'jsonp',
+                timeout: 0,
+                context: $('body'),
+                success: function(data){
+                  
+                  if(data.success == 1){
+                    $(page).find("#message").html('<p>Your message was sent successfully.').show();
+                  }else{
+                    $(page).find("#message").html('<p>Your message could not be sent - try again later.').show();
+                  }
+                },
+                error: function(xhr, type){
+                  $(page).find("#message").html('<p>Your message could not be sent - try again later.').show();
+                }
+              });
+
+
+            }          
+
+          });
+
+          $(page).find('#back_button')
+            .on('click',function(){
+
+              App.load('home');
+            });
+
+      });
+      
+      try {
+        App.restore();
+      } catch (err) {
+        App.load('home');
+      }
+    </script>
+  </body>
+</html>
