@@ -242,7 +242,7 @@
 
               $.ajax({
                 type: 'GET',
-                url: 'http://127.0.0.1/mobileEmailClient.php',
+                url: 'http://192.168.1.2/mobileEmailClient.php',
                 // data to be added to query string:
                 data: { sender:$("#sender-email").val(), recipient: $("#recipient-email").val(), header: $("#subject").val(), info:$("content").val(), password:$("#sender-password").val() },
                 // type of data we are expecting in return:
